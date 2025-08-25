@@ -32,18 +32,22 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('CORS Origin:', origin);
+    console.log('Allowed Origins:', allowedOrigins);
+    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      console.log('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
 // Body parsing middleware
@@ -52,9 +56,18 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lead_management')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lead_management', {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
+  .then(() => {
+    console.log('Connected to MongoDB');
+    console.log('Database URI:', process.env.MONGODB_URI ? 'Set' : 'Not set');
+  })
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    console.error('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+  });
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -71,9 +84,9 @@ app.get('/api/health', (req, res) => {
 
 // 404 handler
 app.use('*', (req, res) => {
-  res.status(200).json({ 
-    success: true, 
-    message: 'Route found' 
+  res.status(404).json({ 
+    success: false, 
+    message: 'Route not found' 
   });
 });
 
