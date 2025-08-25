@@ -72,7 +72,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchLeads();
-  }, []);
+  }, [fetchLeads]);
 
   const handleFilterChange = (e) => {
     setFilters({

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
@@ -16,8 +16,7 @@ const LeadForm = () => {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
-    watch
+    setValue
   } = useForm({
     defaultValues: {
       first_name: '',
@@ -52,13 +51,7 @@ const LeadForm = () => {
     { value: 'other', label: 'Other' }
   ];
 
-  useEffect(() => {
-    if (isEditing) {
-      fetchLead();
-    }
-  }, [id, isEditing]);
-
-  const fetchLead = async () => {
+  const fetchLead = useCallback(async () => {
     try {
       const response = await axios.get(`/api/leads/${id}`);
       if (response.data.success) {
@@ -75,7 +68,13 @@ const LeadForm = () => {
     } finally {
       setFetchingLead(false);
     }
-  };
+  }, [id, setValue, navigate]);
+
+  useEffect(() => {
+    if (isEditing) {
+      fetchLead();
+    }
+  }, [id, isEditing, fetchLead]);
 
   const onSubmit = async (data) => {
     setLoading(true);
